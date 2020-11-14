@@ -1,37 +1,94 @@
+
 const Manager = require("./lib/Manager");
 const Engineer = require("./lib/Engineer");
 const Intern = require("./lib/Intern");
-// const inquirer = require("inquirer");
+
+const prompts = require("./userPrompts");
+const render = require("./lib/htmlRenderer");
+
+// Packages
+const inquirer = require("inquirer");
 const path = require("path");
 const fs = require("fs");
+const userPrompts = require("./userPrompts");
 
-// const OUTPUT_DIR = path.resolve(__dirname, "output");
-// const outputPath = path.join(OUTPUT_DIR, "team.html");
+//path
+const OUTPUT_DIR = path.resolve(__dirname, "output");
+const outputPath = path.join(OUTPUT_DIR, "team.html");
 
-// const render = require("./lib/htmlRenderer");
 
-const engineerOne = new Engineer("Jon,", "jon@gmail.com", "jonHub");
-console.log(engineerOne);
+// Array of employees
 
-// Write code to use inquirer to gather information about the development team members,
-// and to create objects for each team member (using the correct classes as blueprints!)
+const employees = [];
 
-// After the user has input all employees desired, call the `render` function (required
-// above) and pass in an array containing all employee objects; the `render` function will
-// generate and return a block of HTML including templated divs for each employee!
+//create manager
 
-// After you have your html, you're now ready to create an HTML file using the HTML
-// returned from the `render` function. Now write it to a file named `team.html` in the
-// `output` folder. You can use the variable `outputPath` above target this location.
-// Hint: you may need to check if the `output` folder exists and create it if it
-// does not.
+function createManager() {
+  inquirer.prompt(userPrompts.manager).then((managerResponses) => {
+    let newManager = new Manager(
+      managerResponses.mngrName,
+      managerResponses.mngrId,
+      managerResponses.mngrEmail,
+      managerResponses.mngrOffice
+    );
 
-// HINT: each employee type (manager, engineer, or intern) has slightly different
-// information; write your code to ask different questions via inquirer depending on
-// employee type.
+    employees.push(newManager);
 
-// HINT: make sure to build out your classes first! Remember that your Manager, Engineer,
-// and Intern classes should all extend from a class named Employee; see the directions
-// for further information. Be sure to test out each class and verify it generates an
-// object with the correct structure and methods. This structure will be crucial in order
-// for the provided `render` function to work! ```
+    console.log("New manager created:", newManager);
+    confirmEmployee();
+  });
+}
+
+//confirm employee
+
+function confirmEmployee() {
+  inquirer.prompt(userPrompts.create).then((confirmEmployee) => {
+    switch (confirmEmployee.confirmEmployee) {
+      case false:
+        console.log("Here is your current: ", employees);
+        console.log("your page is being built by our generator");
+        fs.writeFileSync(outputPath, render(employees), "utf-8");
+        return;
+      case true:
+        createEmployee();
+    }
+  });
+}
+
+// Create Engineer or Intern
+function createEmployee() {
+  // add an Engineer or Intern?
+  inquirer.prompt(userPrompts.employee).then((employeeRole) => {
+    switch (employeeRole.employeeRole) {
+      case "Engineer":
+        inquirer.prompt(userPrompts.engineer).then((engResponses) => {
+          let newEngineer = new Engineer(
+            engResponses.engineerName,
+            engResponses.engineerId,
+            engResponses.engineerEmail,
+            engResponses.engineerGithub
+          );
+          employees.push(newEngineer);
+          console.log("An engineer has been addred to the team: ", newEngineer);
+          confirmEmployee();
+        });
+        break;
+      case "Intern":
+        inquirer.prompt(userPrompts.intern).then((internResponses) => {
+          let newIntern = new Intern(
+            internResponses.internName,
+            internResponses.internId,
+            internResponses.internEmail,
+            internResponses.internSchool
+          );
+          employees.push(newIntern);
+          console.log("An intern has been added to the team: ", newIntern);
+          confirmEmployee();
+        });
+        break;
+    }
+  });
+}
+
+  createManager();
+ 
